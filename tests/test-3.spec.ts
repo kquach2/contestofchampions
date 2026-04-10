@@ -1,4 +1,4 @@
-import { PrestigeCalcPage } from "@pages/prestigecalc.spec";
+import { PrestigeCalcPage } from "@pages/prestigecalc.page";
 import { test, expect } from "@playwright/test";
 test.describe("Prestige Calculator Page", () => {
   test("Check that prestige is calculated properly and calculator can be cleared", async ({
