@@ -1,7 +1,10 @@
-import { GlossaryPage } from "@pages/glossary.page";
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "@fixtures/pages.fixtures";
 
-test("validate glossary terms are visible in ui from API", async ({ page }) => {
+test("validate glossary terms are visible in ui from API", async ({
+  page,
+  glossaryPage,
+}) => {
   let glossaryTerms: any;
   let apiUrl = process.env.API_URL;
   await test.step("intercept /glossary", async () => {
@@ -12,7 +15,6 @@ test("validate glossary terms are visible in ui from API", async ({ page }) => {
     });
   });
 
-  const glossaryPage = new GlossaryPage(page);
   glossaryPage.goto();
 
   await expect(glossaryPage.tableOfContents).toBeVisible();

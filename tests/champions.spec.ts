@@ -1,8 +1,12 @@
 import { ChampionsPage } from "@pages/champions.page";
-import { test, expect } from "@playwright/test";
+import { test } from "@fixtures/pages.fixtures";
+import { expect } from "@playwright/test";
 import { decode } from "html-entities";
 
-test("validate champions are visible in ui from API", async ({ page }) => {
+test("validate champions are visible in ui from API", async ({
+  page,
+  championsPage,
+}) => {
   let champions: any;
   let apiUrl = process.env.API_URL;
   await test.step("intercept /spotlights", async () => {
@@ -13,10 +17,9 @@ test("validate champions are visible in ui from API", async ({ page }) => {
     });
   });
 
-  const championsPage = new ChampionsPage(page);
   await championsPage.goto();
 
-  await expect(page.locator(".news-list.show")).toBeVisible();
+  await expect(championsPage.championsGrid).toBeVisible();
 
   // for (const champion of champions.news) {
   //   console.log(champion.title.rendered);
@@ -30,92 +33,135 @@ test("validate champions are visible in ui from API", async ({ page }) => {
   }
 });
 
-test("Validate only cosmic champions are in champions grid after selecting cosmic filter", async ({
-  page,
-}) => {
-  const championsPage = new ChampionsPage(page);
-  await championsPage.goto();
-  await expect(page.locator(".news-list.show")).toBeVisible();
+test.describe("Validate class filters update champions grid appropriately", async () => {
+  test("Validate only cosmic champions are in champions grid after selecting cosmic filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
 
-  await championsPage.cosmicFilter.click();
+    await championsPage.filterByCosmic();
 
-  await expect(page.locator("span.active[title='Cosmic']")).toBeVisible();
-  const championTiles = await championsPage.championTiles.all();
+    await expect(championsPage.cosmicFilter).toHaveClass("active");
+    const championTiles = await championsPage.championTiles.all();
 
-  for (const championTile of championTiles) {
-    await expect(
-      championTile.locator(".champion-tile-class.cosmic"),
-    ).toHaveCount(1);
-  }
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.cosmic"),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("Validate only tech champions are in champions grid after selecting tech filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.filterByTech();
+
+    await expect(championsPage.techFilter).toHaveClass("active");
+    const championTiles = await championsPage.championTiles.all();
+
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.tech"),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("Validate only mutant champions are in champions grid after selecting mutant filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.filterByMutant();
+
+    await expect(championsPage.mutantFilter).toHaveClass("active");
+    const championTiles = await championsPage.championTiles.all();
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.mutant"),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("Validate only skill champions are in champions grid after selecting skill filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.filterBySkill();
+
+    await expect(championsPage.skillFilter).toBeVisible();
+    const championTiles = await championsPage.championTiles.all();
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.skill"),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("Validate only science champions are in champions grid after selecting science filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.filterByScience();
+
+    await expect(championsPage.scienceFilter).toHaveClass("active");
+    const championTiles = await championsPage.championTiles.all();
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.science"),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("Validate only mystic champions are in champions grid after selecting mystic filter", async ({
+    championsPage,
+  }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.filterByMystic();
+
+    await expect(championsPage.mysticFilter).toHaveClass("active");
+    const championTiles = await championsPage.championTiles.all();
+    for (const championTile of championTiles) {
+      await expect(
+        championTile.locator(".champion-tile-class.mystic"),
+      ).toHaveCount(1);
+    }
+  });
 });
 
-test("Validate only tech champions are in champions grid after selecting tech filter", async ({
-  page,
-}) => {
-  const championsPage = new ChampionsPage(page);
-  await championsPage.goto();
-  await expect(page.locator(".news-list.show")).toBeVisible();
+test.describe("Validate search returns the correct results", async () => {
+  test("Search for Thor", async ({ championsPage }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
 
-  await championsPage.techFilter.click();
+    await championsPage.search("Thor");
 
-  await expect(page.locator("span.active[title='Tech']")).toBeVisible();
-  const championTiles = await championsPage.championTiles.all();
+    await expect(championsPage.championsGrid).toBeVisible();
 
-  for (const championTile of championTiles) {
-    await expect(championTile.locator(".champion-tile-class.tech")).toHaveCount(
-      1,
+    const championTiles = await championsPage.championTiles.all();
+    await expect(championTiles.length).toBe(3);
+    await expect(championTiles[0]).toContainText("Thor (Ragnarok)");
+    await expect(championTiles[1]).toContainText("Thor (Jane Foster)");
+    await expect(championTiles[2]).toContainText("Thor");
+  });
+  test("Search for non-existing character", async ({ championsPage }) => {
+    await championsPage.goto();
+    await expect(championsPage.championsGrid).toBeVisible();
+
+    await championsPage.search("Superman");
+
+    await expect(championsPage.noResultsMessageBox).toContainText(
+      "No Champions Found",
     );
-  }
-});
-
-test("Validate only mutant champions are in champions grid after selecting mutant filter", async ({
-  page,
-}) => {
-  const championsPage = new ChampionsPage(page);
-  await championsPage.goto();
-  await expect(page.locator(".news-list.show")).toBeVisible();
-
-  await championsPage.mutantFilter.click();
-
-  await expect(page.locator("span.active[title='Mutant']")).toBeVisible();
-  const championTiles = await championsPage.championTiles.all();
-  for (const championTile of championTiles) {
-    await expect(
-      championTile.locator(".champion-tile-class.mutant"),
-    ).toHaveCount(1);
-  }
-});
-
-test("Validate only skill champions are in champions grid after selecting mutant filter", async ({
-  page,
-}) => {
-  const championsPage = new ChampionsPage(page);
-  await championsPage.goto();
-  await expect(page.locator(".news-list.show")).toBeVisible();
-
-  await championsPage.skillFilter.click();
-
-  await expect(page.locator("span.active[title='Skill']")).toBeVisible();
-  const championTiles = await championsPage.championTiles.all();
-  for (const championTile of championTiles) {
-    await expect(
-      championTile.locator(".champion-tile-class.skill"),
-    ).toHaveCount(1);
-  }
-});
-
-test("Search for Thor", async ({ page }) => {
-  const championsPage = new ChampionsPage(page);
-  await championsPage.goto();
-  await expect(page.locator(".news-list.show")).toBeVisible();
-
-  await championsPage.searchBox.fill("Thor");
-  await championsPage.searchButton.click();
-
-  await expect(page.locator(".news-list.show")).toBeVisible();
-
-  const championTiles = await championsPage.championTiles.all();
-  await expect(championTiles[0]).toContainText("Thor (Ragnarok)");
-  await expect(championTiles[1]).toContainText("Thor (Jane Foster)");
-  await expect(championTiles[2]).toContainText("Thor");
+  });
 });
